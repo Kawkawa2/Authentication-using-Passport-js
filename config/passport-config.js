@@ -1,15 +1,14 @@
 const localStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
-const users = require("../public/users.json");
+var User = require("../models/userModel");
 
-const getUserByEmail = (email) => {
-  return users.find((user) => {
-    return user.email === email;
-  });
+const getUserByEmail = async (email) => {
+  const user = await User.findOne({ email: email });
+  return user;
 };
 
 async function authenticateUser(req, email, password, done) {
-  const findUser = getUserByEmail(email);
+  const findUser = await getUserByEmail(email);
   req.flash("inputBack", { email });
   if (!findUser) {
     req.flash("validationErrors", "The email entered is not registred");
@@ -38,14 +37,20 @@ function initializePassport(passport) {
   );
   // Configure serialization and deserialization of user data
   passport.serializeUser((user, done) => {
-    return done(null, user.id);
+    return done(null, user._id);
   });
 
-  passport.deserializeUser((id, done) => {
-    const findUserById = users.find((user) => {
-      return user.id === id;
-    });
-    return done(null, findUserById);
+  passport.deserializeUser(async (id, done) => {
+    try {
+      const user = await User.findOne({ _id: id });
+      if (!user) {
+        return done(null, false); // User not found
+      }
+      // Attach the user to the request object
+      done(null, user);
+    } catch (error) {
+      done(error);
+    }
   });
 }
 

@@ -6,12 +6,13 @@ const passport = require("passport");
 const session = require("express-session");
 const flash = require("connect-flash");
 const cookieParser = require("cookie-parser");
+const mongoose = require("mongoose");
 
 var app = express();
 
 // configuration
 const PORT = process.env.PORT;
-const URI = process.env.URI;
+const URI = process.env.MONGODB_URL;
 
 // body parser
 app.use(express.json());
@@ -59,3 +60,12 @@ app.use("/", require("./routes/indexRoute"));
 app.listen(PORT, () => {
   console.log("Application listening at :", PORT);
 });
+
+// connecting the database
+mongoose
+  .connect(URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("Database Connexion successfully to: ", URI))
+  .catch((err) => {
+    console.log(err);
+    process.exit();
+  });

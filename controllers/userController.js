@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const { validationResult } = require("express-validator");
 const passport = require("passport");
-const users = require("../public/users.json");
+var User = require("../models/userModel");
 
 // securing our app fron xss and csrf attacks
 const csruf = require("csurf");
@@ -31,7 +31,6 @@ const userController = {
     }
     passport.authenticate("local-login", {
       successRedirect: "/",
-      userProperty: "user",
       failureRedirect: "/login",
       failureFlash: true,
     })(req, res, next);
@@ -47,9 +46,7 @@ const userController = {
         req.flash("sanitizationErrors", errors.array());
         return res.redirect("/register");
       }
-      const findUser = users.find((user) => {
-        return user.email === email;
-      });
+      const findUser = await User.findOne({ email: email });
       if (findUser) {
         req.flash("validationErrors", "The email entered already registred");
         return res.redirect("/register");
@@ -60,8 +57,7 @@ const userController = {
         password: xss(password),
       };
       const hashedPassword = await bcrypt.hash(sanitizedData.password, 10);
-      users.push({
-        id: users.length + 1,
+      User.create({
         name: sanitizedData.username,
         email: sanitizedData.email,
         password: hashedPassword,
