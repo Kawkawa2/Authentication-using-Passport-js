@@ -1,1 +1,1 @@
-# Authentication_with_Passport.js
+# Blog post project
